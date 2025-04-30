@@ -1,0 +1,111 @@
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Authorization;
+using System.Linq;
+using System.Threading.Tasks;
+using MyIdentityApi.Dtos;
+using MyIdentityApi.Models;
+
+namespace MyIdentityApi.Controllers
+{
+    [Route("api/[controller]")]
+    [ApiController]
+    public class RoleController : ControllerBase
+    {
+        private readonly RoleManager<IdentityRole> _roleManager;
+        private readonly UserManager<ApplicationUser> _userManager;
+    
+        public RoleController(RoleManager<IdentityRole> roleManager, UserManager<ApplicationUser> userManager)
+        {
+            _roleManager = roleManager;
+            _userManager = userManager;
+        }
+    
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetRoleById(string id)
+        {
+            var role = await _roleManager.FindByIdAsync(id);
+            if (role == null) return NotFound();
+    
+            return Ok(role);
+        }
+    
+        [HttpGet]
+        public IActionResult GetAllRoles()
+        {
+            var roles = _roleManager.Roles.ToList();
+            return Ok(roles);
+        }
+    
+        [HttpPost]
+        public async Task<IActionResult> CreateRole(CreateRoleDto model)
+        {
+            var role = new IdentityRole { Name = model.Name };
+            var result = await _roleManager.CreateAsync(role);
+    
+            if (result.Succeeded) return Ok(role);
+    
+            return BadRequest(result.Errors);
+        }
+    
+        [HttpPut("{id}")]
+        public async Task<IActionResult> UpdateRole(string id, UpdateRoleDto model)
+        {
+            var role = await _roleManager.FindByIdAsync(id);
+            if (role == null) return NotFound();
+    
+            role.Name = model.Name;
+            var result = await _roleManager.UpdateAsync(role);
+    
+            if (result.Succeeded) return NoContent();
+    
+            return BadRequest(result.Errors);
+        }
+    
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteRole(string id)
+        {
+            var role = await _roleManager.FindByIdAsync(id);
+            if (role == null) return NotFound();
+    
+            var result = await _roleManager.DeleteAsync(role);
+    
+            if (result.Succeeded) return NoContent();
+    
+            return BadRequest(result.Errors);
+        }
+    
+        [HttpPost("{roleId}/users/{userId}")]
+        public async Task<IActionResult> AddUserToRole(string roleId, string userId)
+        {
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user == null) return NotFound();
+    
+            var role = await _roleManager.FindByIdAsync(roleId);
+            if (role == null) return NotFound();
+    
+            var result = await _userManager.AddToRoleAsync(user, role.Name);
+    
+            if (result.Succeeded) return NoContent();
+    
+            return BadRequest(result.Errors);
+        }
+    
+        [HttpDelete("{roleId}/users/{userId}")]
+        public async Task<IActionResult> RemoveUserFromRole(string roleId, string userId)
+        {
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user == null) return NotFound();
+    
+            var role = await _roleManager.FindByIdAsync(roleId);
+            if (role == null) return NotFound();
+    
+            var result = await _userManager.RemoveFromRoleAsync(user, role.Name);
+    
+            if (result.Succeeded) return NoContent();
+    
+            return BadRequest(result.Errors);
+        }
+    }
+
+}
