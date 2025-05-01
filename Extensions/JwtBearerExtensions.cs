@@ -48,7 +48,6 @@ namespace MyIdentityApi.Extensions
                             return;
                         }
 
-                        // Check if token is revoked
                         var tokenString = context.Request.Headers["Authorization"]
                             .ToString().Replace("Bearer ", "");
 
@@ -61,7 +60,6 @@ namespace MyIdentityApi.Extensions
                             return;
                         }
 
-                        // Verify user exists and is active
                         var userManager = context.HttpContext.RequestServices
                             .GetRequiredService<UserManager<ApplicationUser>>();
 
