@@ -9,6 +9,8 @@ using System.IO;
 using Microsoft.AspNetCore.Hosting;
 using MyIdentityApi.Services;
 using Microsoft.AspNetCore.Authorization;
+using MyIdentityApi.Mappers;
+using MyIdentityApi.Dtos.User;
 
 namespace MyIdentityApi.Controllers
 {
@@ -31,8 +33,8 @@ namespace MyIdentityApi.Controllers
         {
             var user = await _userManager.FindByIdAsync(id);
             if (user == null) return NotFound();
-    
-            return Ok(user);
+
+            return Ok(UserMapper.ToResponseDto(user));
         }
     
         [HttpGet]
@@ -40,7 +42,7 @@ namespace MyIdentityApi.Controllers
         public IActionResult GetAllUsers()
         {
             var users = _userManager.Users.ToList();
-            return Ok(users);
+            return Ok(users.Select(UserMapper.ToResponseDto));
         }
     
         [HttpPut("{id}")]
@@ -49,16 +51,12 @@ namespace MyIdentityApi.Controllers
         {
             var user = await _userManager.FindByIdAsync(id);
             if (user == null) return NotFound();
-    
-            user.Email = model.Email;
-            user.UserName = model.Username;
-            user.FirstName = model.FirstName;
-            user.LastName = model.LastName;
-    
+
+            UserMapper.UpdateEntity(user, model);
             var result = await _userManager.UpdateAsync(user);
-    
+
             if (result.Succeeded) return NoContent();
-    
+
             return BadRequest(result.Errors);
         }
     

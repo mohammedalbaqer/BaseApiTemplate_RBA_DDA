@@ -33,28 +33,10 @@ builder.Services.AddCors(options =>
     });
 });
 
-var postgreSqlConnection = builder.Configuration.GetConnectionString("PostgreSqlConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
-var sqlServerConnection = builder.Configuration.GetConnectionString("SqlServerConnection")?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
-
-if(postgreSqlConnection != null)
-{
-    builder.Services.AddDbContext<ApplicationDbContext>(options =>
-        options.UseNpgsql(postgreSqlConnection));
-}
-else
-{
-    builder.Services.AddDbContext<ApplicationDbContext>(options =>
-        options.UseSqlServer(sqlServerConnection));
-}
-
-builder.Services.AddIdentity<ApplicationUser, IdentityRole>()
-    .AddEntityFrameworkStores<ApplicationDbContext>()
-    .AddDefaultTokenProviders();
-
+builder.Services.AddApplicationDbContext(builder.Configuration);
+builder.Services.AddApplicationIdentity();
 builder.Services.AddJwtBearer(builder.Configuration);
-builder.Services.AddScoped<JwtTokenService>();
-builder.Services.AddScoped<RefreshTokenService>();
-builder.Services.AddScoped<FileService>();
+builder.Services.AddApplicationServices();
 
 builder.Services.AddControllers();
 

@@ -5,6 +5,8 @@ using System.Linq;
 using System.Threading.Tasks;
 using MyIdentityApi.Dtos;
 using MyIdentityApi.Models;
+using MyIdentityApi.Dtos.Role;
+using MyIdentityApi.Mappers;
 
 namespace MyIdentityApi.Controllers
 {
@@ -28,7 +30,7 @@ namespace MyIdentityApi.Controllers
             var role = await _roleManager.FindByIdAsync(id);
             if (role == null) return NotFound();
     
-            return Ok(role);
+            return Ok(RoleMapper.ToResponseDto(role));
         }
     
         [HttpGet]
@@ -36,17 +38,17 @@ namespace MyIdentityApi.Controllers
         public IActionResult GetAllRoles()
         {
             var roles = _roleManager.Roles.ToList();
-            return Ok(roles);
+            return Ok(roles.Select(RoleMapper.ToResponseDto));
         }
     
         [HttpPost]
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> CreateRole(CreateRoleDto model)
         {
-            var role = new IdentityRole { Name = model.Name };
+            var role = RoleMapper.ToEntity(model);
             var result = await _roleManager.CreateAsync(role);
     
-            if (result.Succeeded) return Ok(role);
+            if (result.Succeeded) return Ok(RoleMapper.ToResponseDto(role));
     
             return BadRequest(result.Errors);
         }
@@ -58,7 +60,7 @@ namespace MyIdentityApi.Controllers
             var role = await _roleManager.FindByIdAsync(id);
             if (role == null) return NotFound();
     
-            role.Name = model.Name;
+            RoleMapper.UpdateEntity(role, model);
             var result = await _roleManager.UpdateAsync(role);
     
             if (result.Succeeded) return NoContent();

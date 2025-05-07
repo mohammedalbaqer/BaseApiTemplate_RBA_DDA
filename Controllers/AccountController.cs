@@ -7,6 +7,7 @@ using MyIdentityApi.Models;
 using Microsoft.AspNetCore.Authorization;
 using System.Security.Claims;
 using MyIdentityApi.Data;
+using MyIdentityApi.Dtos.Account;
 
 namespace MyIdentityApi.Controllers
 {
