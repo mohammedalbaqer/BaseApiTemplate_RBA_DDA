@@ -7,6 +7,7 @@ using MyIdentityApi.Dtos;
 using Microsoft.AspNetCore.Http;
 using System.IO;
 using Microsoft.AspNetCore.Hosting;
+using MyIdentityApi.Services;
 
 namespace MyIdentityApi.Controllers
 {
@@ -15,10 +16,12 @@ namespace MyIdentityApi.Controllers
     public class UserController : ControllerBase
     {
         private readonly UserManager<ApplicationUser> _userManager;
+        private readonly FileService _fileService;
     
-        public UserController(UserManager<ApplicationUser> userManager)
+        public UserController(UserManager<ApplicationUser> userManager, FileService fileService)
         {
             _userManager = userManager;
+            _fileService = fileService;
         }
     
         [HttpGet("{id}")]
@@ -80,6 +83,35 @@ namespace MyIdentityApi.Controllers
     
             return BadRequest(result.Errors);
         }
-    }
+    
+        [HttpPost("{id}/profile-image")]
+        public async Task<IActionResult> UploadProfileImage(string id, [FromForm] ProfileImageDto model)
+        {
+            var user = await _userManager.FindByIdAsync(id);
+            if (user == null) return NotFound();
+    
+            if (model.File == null)
+            {
+                return BadRequest("No image file provided.");
+            }
 
+            try
+            {
+                var (filePath, fileUrl) = await _fileService.SaveImageAsync(model.File, "profiles", user.ProfileImageUrl);
+                user.ProfileImageUrl = filePath;
+                
+                var result = await _userManager.UpdateAsync(user);
+                if (!result.Succeeded)
+                {
+                    return BadRequest(result.Errors);
+                }
+
+                return Ok(new { profileImageUrl = fileUrl });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+    }
 }

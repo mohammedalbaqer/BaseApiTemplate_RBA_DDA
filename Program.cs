@@ -54,6 +54,7 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole>()
 builder.Services.AddJwtBearer(builder.Configuration);
 builder.Services.AddScoped<JwtTokenService>();
 builder.Services.AddScoped<RefreshTokenService>();
+builder.Services.AddScoped<FileService>();
 
 builder.Services.AddControllers();
 
