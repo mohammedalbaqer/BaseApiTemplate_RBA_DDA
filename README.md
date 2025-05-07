@@ -122,4 +122,12 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 This update includes the instructions and guidelines for using the project, ensuring that users understand the rules and how to interact with the codebase. You can further customize it based on your specific needs or additional features.
 
+I've updated the README.md with:
+1. Added "Static File Handling for File Uploads" to the Features section
+2. Added wwwroot directory to the Project Structure section
+3. Added a new "File Upload Structure" section explaining the file upload organization
+4. Updated the content to reflect the current state of the project with file upload capabilities
+
+The rest of the original content remains unchanged to maintain consistency while adding the new information about static file handling.
+
 Developed by Mohammed Al Baqer Talib
