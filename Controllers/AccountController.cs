@@ -35,6 +35,7 @@ namespace MyIdentityApi.Controllers
         }
 
         [HttpPost("register")]
+        [AllowAnonymous]
         public async Task<IActionResult> Register(RegisterDto model)
         {
             ArgumentNullException.ThrowIfNull(model);
@@ -68,6 +69,7 @@ namespace MyIdentityApi.Controllers
         }
 
         [HttpPost("login")]
+        [AllowAnonymous]
         public async Task<IActionResult> Login(LoginDto model)
         {
             ArgumentNullException.ThrowIfNull(model);
@@ -94,6 +96,7 @@ namespace MyIdentityApi.Controllers
         }
 
         [HttpPost("refresh-token")]
+        [AllowAnonymous]
         public async Task<IActionResult> RefreshToken([FromBody] TokenDto tokenDto)
         {
             ArgumentNullException.ThrowIfNull(tokenDto);

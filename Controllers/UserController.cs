@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Http;
 using System.IO;
 using Microsoft.AspNetCore.Hosting;
 using MyIdentityApi.Services;
+using Microsoft.AspNetCore.Authorization;
 
 namespace MyIdentityApi.Controllers
 {
@@ -25,6 +26,7 @@ namespace MyIdentityApi.Controllers
         }
     
         [HttpGet("{id}")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> GetUserById(string id)
         {
             var user = await _userManager.FindByIdAsync(id);
@@ -34,6 +36,7 @@ namespace MyIdentityApi.Controllers
         }
     
         [HttpGet]
+        [Authorize(Roles = "Admin")]
         public IActionResult GetAllUsers()
         {
             var users = _userManager.Users.ToList();
@@ -41,6 +44,7 @@ namespace MyIdentityApi.Controllers
         }
     
         [HttpPut("{id}")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> UpdateUser(string id, UpdateUserDto model)
         {
             var user = await _userManager.FindByIdAsync(id);
@@ -59,6 +63,7 @@ namespace MyIdentityApi.Controllers
         }
     
         [HttpPut("{id}/update-password")]
+        [Authorize(Roles = "User")]
         public async Task<IActionResult> UpdatePassword(string id, PasswordUpdateDto model)
         {
             var user = await _userManager.FindByIdAsync(id);
@@ -72,6 +77,7 @@ namespace MyIdentityApi.Controllers
         }
     
         [HttpDelete("{id}")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> DeleteUser(string id)
         {
             var user = await _userManager.FindByIdAsync(id);
@@ -85,6 +91,7 @@ namespace MyIdentityApi.Controllers
         }
     
         [HttpPost("{id}/profile-image")]
+        [Authorize(Roles = "User")]
         public async Task<IActionResult> UploadProfileImage(string id, [FromForm] ProfileImageDto model)
         {
             var user = await _userManager.FindByIdAsync(id);

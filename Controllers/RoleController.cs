@@ -22,6 +22,7 @@ namespace MyIdentityApi.Controllers
         }
     
         [HttpGet("{id}")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> GetRoleById(string id)
         {
             var role = await _roleManager.FindByIdAsync(id);
@@ -31,6 +32,7 @@ namespace MyIdentityApi.Controllers
         }
     
         [HttpGet]
+        [Authorize(Roles = "Admin")]
         public IActionResult GetAllRoles()
         {
             var roles = _roleManager.Roles.ToList();
@@ -38,6 +40,7 @@ namespace MyIdentityApi.Controllers
         }
     
         [HttpPost]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> CreateRole(CreateRoleDto model)
         {
             var role = new IdentityRole { Name = model.Name };
@@ -49,6 +52,7 @@ namespace MyIdentityApi.Controllers
         }
     
         [HttpPut("{id}")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> UpdateRole(string id, UpdateRoleDto model)
         {
             var role = await _roleManager.FindByIdAsync(id);
@@ -63,6 +67,7 @@ namespace MyIdentityApi.Controllers
         }
     
         [HttpDelete("{id}")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> DeleteRole(string id)
         {
             var role = await _roleManager.FindByIdAsync(id);
@@ -76,6 +81,7 @@ namespace MyIdentityApi.Controllers
         }
     
         [HttpPost("{roleId}/users/{userId}")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> AddUserToRole(string roleId, string userId)
         {
             var user = await _userManager.FindByIdAsync(userId);
@@ -92,6 +98,7 @@ namespace MyIdentityApi.Controllers
         }
     
         [HttpDelete("{roleId}/users/{userId}")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> RemoveUserFromRole(string roleId, string userId)
         {
             var user = await _userManager.FindByIdAsync(userId);
