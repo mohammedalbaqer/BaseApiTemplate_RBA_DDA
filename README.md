@@ -11,6 +11,7 @@ MyIdentityApi is a base template for creating identity management APIs using ASP
 - Supports PostgreSQL and SQL Server
 - Swagger for API documentation
 - CORS policy setup for development
+- Static File Handling for File Uploads
 
 ## Prerequisites
 
@@ -78,6 +79,18 @@ Access the API documentation at http://localhost:5211/swagger when the applicati
 - Extensions/ : Contains extension methods for configuring services.
 - Models/ : Contains entity models for the application.
 - Services/ : Contains service classes for handling business logic.
+- wwwroot/ : Contains static files and uploaded media content.
+
+## File Upload Structure
+
+The application supports file uploads with the following structure:
+
+- wwwroot/
+  - uploads/
+    - profiles/ : For user profile images
+    - other directories based on image types
+
+Files are served through the static files middleware and are accessible via URLs like: /uploads/{type}/{filename}
 
 ## Direct Data Access Pattern
 
