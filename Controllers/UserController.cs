@@ -13,12 +13,13 @@ using MyIdentityApi.Mappers;
 using MyIdentityApi.Dtos.User;
 using MyIdentityApi.Dtos.Common;
 using MyIdentityApi.Extensions;
+using Microsoft.EntityFrameworkCore;
 
 namespace MyIdentityApi.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class UserController : ControllerBase
+    public class UserController : BaseApiController
     {
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly FileService _fileService;
@@ -34,34 +35,50 @@ namespace MyIdentityApi.Controllers
         public async Task<IActionResult> GetUserById(string id)
         {
             var user = await _userManager.FindByIdAsync(id);
-            if (user == null) return NotFound();
+            if (user == null) return ApiError<object>(new List<string> { "User not found" }, 404);
 
-            return Ok(UserMapper.ToResponseDto(user));
+            return CreateApiResponse<UserResponseDto>(UserMapper.ToResponseDto(user));
         }
     
         [HttpGet]
         [Authorize(Roles = "Admin")]
-        public async Task<ActionResult<PaginatedResponseDto<UserResponseDto>>> GetUsers([FromQuery] PaginationDto pagination)
+        public async Task<IActionResult> GetUsers([FromQuery] PaginationDto pagination)
         {
             var query = _userManager.Users;
             
+            // Apply search if specified
+            if (!string.IsNullOrWhiteSpace(pagination.SearchQuery))
+            {
+                var searchTerm = pagination.SearchQuery.ToLower();
+                query = query.Where(u => 
+                    u.UserName.ToLower().Contains(searchTerm) ||
+                    u.Email.ToLower().Contains(searchTerm) ||
+                    u.FirstName.ToLower().Contains(searchTerm) ||
+                    u.LastName.ToLower().Contains(searchTerm));
+            }
+            
             // Apply sorting if specified
             query = query.ApplySort(pagination.SortBy, pagination.IsDescending);
-
-            var paginatedResult = await query.ToPaginatedListAsync(
-                pagination.PageNumber,
-                pagination.PageSize);
-
-            var userDtos = paginatedResult.Items.Select(UserMapper.ToResponseDto);
-
-            return Ok(new PaginatedResponseDto<UserResponseDto>
+    
+            var count = await query.CountAsync();
+            var items = await query
+                .Skip((pagination.PageNumber - 1) * pagination.PageSize)
+                .Take(pagination.PageSize)
+                .ToListAsync();
+    
+            var userDtos = items.Select(UserMapper.ToResponseDto);
+    
+            var paginatedResponse = new PaginatedResponseDto<UserResponseDto>
             {
-                Items = userDtos,
-                PageNumber = paginatedResult.PageNumber,
-                PageSize = paginatedResult.PageSize,
-                TotalPages = paginatedResult.TotalPages,
-                TotalCount = paginatedResult.TotalCount
-            });
+                Data = userDtos,
+                PageNumber = pagination.PageNumber,
+                PageSize = pagination.PageSize,
+                TotalCount = count,
+                TotalPages = (int)Math.Ceiling(count / (double)pagination.PageSize),
+                SearchQuery = pagination.SearchQuery
+            };
+    
+            return CreateApiResponse(paginatedResponse);
         }
     
         [HttpPut("{id}")]
@@ -69,14 +86,14 @@ namespace MyIdentityApi.Controllers
         public async Task<IActionResult> UpdateUser(string id, UpdateUserDto model)
         {
             var user = await _userManager.FindByIdAsync(id);
-            if (user == null) return NotFound();
+            if (user == null) return ApiError<object>(new List<string> { "User not found" }, 404);
 
             UserMapper.UpdateEntity(user, model);
             var result = await _userManager.UpdateAsync(user);
 
-            if (result.Succeeded) return NoContent();
+            if (result.Succeeded) return CreateApiResponse<object>(null, 204);
 
-            return BadRequest(result.Errors);
+            return ApiError<object>(result.Errors.Select(e => e.Description).ToList());
         }
     
         [HttpPut("{id}/update-password")]
@@ -84,13 +101,13 @@ namespace MyIdentityApi.Controllers
         public async Task<IActionResult> UpdatePassword(string id, PasswordUpdateDto model)
         {
             var user = await _userManager.FindByIdAsync(id);
-            if (user == null) return NotFound();
-    
+            if (user == null) return ApiError<object>(new List<string> { "User not found" }, 404);
+
             var result = await _userManager.ChangePasswordAsync(user, model.CurrentPassword, model.NewPassword);
-    
-            if (result.Succeeded) return NoContent();
-    
-            return BadRequest(result.Errors);
+
+            if (result.Succeeded) return CreateApiResponse<object>(null, 204);
+
+            return ApiError<object>(result.Errors.Select(e => e.Description).ToList());
         }
     
         [HttpDelete("{id}")]
@@ -98,13 +115,13 @@ namespace MyIdentityApi.Controllers
         public async Task<IActionResult> DeleteUser(string id)
         {
             var user = await _userManager.FindByIdAsync(id);
-            if (user == null) return NotFound();
-    
+            if (user == null) return ApiError<object>(new List<string> { "User not found" }, 404);
+
             var result = await _userManager.DeleteAsync(user);
-    
-            if (result.Succeeded) return NoContent();
-    
-            return BadRequest(result.Errors);
+
+            if (result.Succeeded) return CreateApiResponse<object>(null, 204);
+
+            return ApiError<object>(result.Errors.Select(e => e.Description).ToList());
         }
     
         [HttpPost("{id}/profile-image")]
@@ -112,11 +129,11 @@ namespace MyIdentityApi.Controllers
         public async Task<IActionResult> UploadProfileImage(string id, [FromForm] ProfileImageDto model)
         {
             var user = await _userManager.FindByIdAsync(id);
-            if (user == null) return NotFound();
-    
+            if (user == null) return ApiError<object>(new List<string> { "User not found" }, 404);
+
             if (model.File == null)
             {
-                return BadRequest("No image file provided.");
+                return ApiError<object>(new List<string> { "No image file provided" });
             }
 
             try
@@ -127,14 +144,14 @@ namespace MyIdentityApi.Controllers
                 var result = await _userManager.UpdateAsync(user);
                 if (!result.Succeeded)
                 {
-                    return BadRequest(result.Errors);
+                    return ApiError<object>(result.Errors.Select(e => e.Description).ToList());
                 }
 
-                return Ok(new { profileImageUrl = fileUrl });
+                return CreateApiResponse<object>(new { profileImageUrl = fileUrl });
             }
             catch (InvalidOperationException ex)
             {
-                return BadRequest(ex.Message);
+                return ApiError<object>(new List<string> { ex.Message });
             }
         }
     }

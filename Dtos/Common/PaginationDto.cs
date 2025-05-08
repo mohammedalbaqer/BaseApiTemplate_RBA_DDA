@@ -19,4 +19,5 @@ public class PaginationDto
 
     public string? SortBy { get; set; }
     public bool IsDescending { get; set; }
+    public string? SearchQuery { get; set; } 
 }

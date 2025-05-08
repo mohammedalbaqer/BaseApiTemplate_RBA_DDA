@@ -13,7 +13,7 @@ namespace MyIdentityApi.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class AccountController : ControllerBase
+    public class AccountController : BaseApiController
     {
         private readonly ApplicationDbContext _context;
         private readonly UserManager<ApplicationUser> _userManager;
@@ -51,10 +51,10 @@ namespace MyIdentityApi.Controllers
                 var (token, expiresAt) = await _jwtTokenService.GenerateToken(user);
                 var refreshToken = await _refreshTokenService.GenerateRefreshTokenAsync(user);
                 
-                return Ok(AccountMapper.ToAuthResponseDto(token, expiresAt, refreshToken.Token));
+                return CreateApiResponse(AccountMapper.ToAuthResponseDto(token, expiresAt, refreshToken.Token), 201);
             }
 
-            return BadRequest(result.Errors);
+            return ApiError<object>(result.Errors.Select(e => e.Description).ToList());
         }
 
         [HttpPost("login")]
@@ -68,15 +68,15 @@ namespace MyIdentityApi.Controllers
             if (result.Succeeded)
             {
                 var user = await _userManager.FindByNameAsync(model.Username);
-                if (user == null) return Unauthorized();
+                if (user == null) return ApiError<object>(new List<string> { "User not found" }, 401);
 
                 var (token, expiresAt) = await _jwtTokenService.GenerateToken(user);
                 var refreshToken = await _refreshTokenService.GenerateRefreshTokenAsync(user);
                 
-                return Ok(AccountMapper.ToAuthResponseDto(token, expiresAt, refreshToken.Token));
+                return CreateApiResponse(AccountMapper.ToAuthResponseDto(token, expiresAt, refreshToken.Token));
             }
 
-            return Unauthorized();
+            return ApiError<object>(new List<string> { "Invalid username or password" }, 401);
         }
 
         [HttpPost("refresh-token")]
@@ -87,21 +87,21 @@ namespace MyIdentityApi.Controllers
 
             if (!await _refreshTokenService.IsTokenValidAsync(tokenDto.RefreshToken))
             {
-                return Unauthorized();
+                return ApiError<object>(new List<string> { "Invalid refresh token" }, 401);
             }
 
             var refreshToken = await _refreshTokenService.GetRefreshTokenAsync(tokenDto.RefreshToken);
-            if (refreshToken == null) return Unauthorized();
+            if (refreshToken == null) return ApiError<object>(new List<string> { "Refresh token not found" }, 401);
 
             var user = await _userManager.FindByIdAsync(refreshToken.UserId);
-            if (user == null) return Unauthorized();
+            if (user == null) return ApiError<object>(new List<string> { "User not found" }, 401);
 
             var (newToken, expiresAt) = await _jwtTokenService.GenerateToken(user);
             var newRefreshToken = await _refreshTokenService.GenerateRefreshTokenAsync(user);
 
             await _refreshTokenService.RevokeRefreshTokenAsync(refreshToken);
 
-            return Ok(AccountMapper.ToAuthResponseDto(newToken, expiresAt, newRefreshToken.Token));
+            return CreateApiResponse(AccountMapper.ToAuthResponseDto(newToken, expiresAt, newRefreshToken.Token));
         }
 
         [HttpPost("logout")]
@@ -112,7 +112,7 @@ namespace MyIdentityApi.Controllers
             {
                 var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
                 if (string.IsNullOrEmpty(userId))
-                    return Unauthorized();
+                    return ApiError<object>(new List<string> { "Unauthorized" }, 401);
 
                 await _refreshTokenService.RevokeAllUserTokensAsync(userId);
                 await _signInManager.SignOutAsync();
@@ -129,11 +129,11 @@ namespace MyIdentityApi.Controllers
                 Response.Headers.Add("Token-Expired", "true");
                 Response.Headers["WWW-Authenticate"] = "Bearer error=\"token_revoked\"";
 
-                return Ok(new { message = "Logged out successfully" });
+                return CreateApiResponse(new { message = "Logged out successfully" });
             }
             catch (Exception)
             {
-                return StatusCode(500, "An error occurred during logout");
+                return ApiError<object>(new List<string> { "An error occurred during logout" }, 500);
             }
         }
     }

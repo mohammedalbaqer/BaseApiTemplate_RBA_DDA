@@ -22,11 +22,11 @@ public static class QueryableExtensions
 
         return new PaginatedResponseDto<T>
         {
-            Items = items,
+            Data = items,
             PageNumber = pageNumber,
             PageSize = pageSize,
-            TotalPages = totalPages,
-            TotalCount = totalCount
+            TotalCount = totalCount,
+            TotalPages = totalPages
         };
     }
 

@@ -104,24 +104,3 @@ app.UseSwaggerUI();
 app.MapControllers();
 
 app.Run();
-
-
-// {
-//   "statusCode": 200,
-//   "isSuccess": true,
-//   "errorMessages": [],
-//   "result": {
-//     "totalRecords": 4,
-//     "page": 1,
-//     "pageSize": 25,
-//     "data": [
-//       {
-//         "id": "55a04c9c-ea8d-4e2e-3a79-08dd8a3d13d7",
-//         "name": "ماء",
-//         "createdAt": "2025-05-03T12:21:48.692453",
-//         "status": true,
-//         "userId": null,
-//         "user": null,
-//         "problems": null,
-//         "problems2": null
-//       },
