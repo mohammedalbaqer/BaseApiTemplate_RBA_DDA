@@ -11,6 +11,8 @@ using MyIdentityApi.Services;
 using Microsoft.AspNetCore.Authorization;
 using MyIdentityApi.Mappers;
 using MyIdentityApi.Dtos.User;
+using MyIdentityApi.Dtos.Common;
+using MyIdentityApi.Extensions;
 
 namespace MyIdentityApi.Controllers
 {
@@ -39,10 +41,27 @@ namespace MyIdentityApi.Controllers
     
         [HttpGet]
         [Authorize(Roles = "Admin")]
-        public IActionResult GetAllUsers()
+        public async Task<ActionResult<PaginatedResponseDto<UserResponseDto>>> GetUsers([FromQuery] PaginationDto pagination)
         {
-            var users = _userManager.Users.ToList();
-            return Ok(users.Select(UserMapper.ToResponseDto));
+            var query = _userManager.Users;
+            
+            // Apply sorting if specified
+            query = query.ApplySort(pagination.SortBy, pagination.IsDescending);
+
+            var paginatedResult = await query.ToPaginatedListAsync(
+                pagination.PageNumber,
+                pagination.PageSize);
+
+            var userDtos = paginatedResult.Items.Select(UserMapper.ToResponseDto);
+
+            return Ok(new PaginatedResponseDto<UserResponseDto>
+            {
+                Items = userDtos,
+                PageNumber = paginatedResult.PageNumber,
+                PageSize = paginatedResult.PageSize,
+                TotalPages = paginatedResult.TotalPages,
+                TotalCount = paginatedResult.TotalCount
+            });
         }
     
         [HttpPut("{id}")]

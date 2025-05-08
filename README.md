@@ -1,6 +1,6 @@
 # Base Api Template RBA
 
-**Version: 1.0.0**
+**Version: 1.0.1**
 
 MyIdentityApi is a base template for creating identity management APIs using ASP.NET Core. It includes features such as JWT authentication, role-based access control, and integration with PostgreSQL and SQL Server databases.
 
@@ -12,6 +12,8 @@ MyIdentityApi is a base template for creating identity management APIs using ASP
 - Swagger for API documentation
 - CORS policy setup for development
 - Static File Handling for File Uploads
+- Pagination Support for API Endpoints
+- Sorting Capabilities for Data Queries
 
 ## Prerequisites
 

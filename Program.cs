@@ -72,16 +72,17 @@ builder.Services.AddSwaggerGen(c =>
 
 var app = builder.Build();
 
+// Create wwwroot and uploads directory
+var webRootPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
+var uploadsPath = Path.Combine(webRootPath, "uploads");
+Directory.CreateDirectory(webRootPath);
+Directory.CreateDirectory(uploadsPath);
+
+
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
     db.Database.EnsureCreated();
-}
-
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
 }
 
 app.UseStaticFiles();
@@ -90,10 +91,37 @@ app.UseCors("CorsPolicy");
 app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
+
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI();
+}
+
 app.UseSwagger();
 app.UseSwaggerUI();
+
 app.MapControllers();
 
 app.Run();
 
 
+// {
+//   "statusCode": 200,
+//   "isSuccess": true,
+//   "errorMessages": [],
+//   "result": {
+//     "totalRecords": 4,
+//     "page": 1,
+//     "pageSize": 25,
+//     "data": [
+//       {
+//         "id": "55a04c9c-ea8d-4e2e-3a79-08dd8a3d13d7",
+//         "name": "ماء",
+//         "createdAt": "2025-05-03T12:21:48.692453",
+//         "status": true,
+//         "userId": null,
+//         "user": null,
+//         "problems": null,
+//         "problems2": null
+//       },

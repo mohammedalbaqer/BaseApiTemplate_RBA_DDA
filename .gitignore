@@ -30,7 +30,7 @@ bld/
 .vs/
 
 # Uncomment if you have tasks that create the project's static files in wwwroot
-wwwroot/
+# wwwroot/
 
 # Visual Studio Code
 .vscode/
@@ -58,3 +58,8 @@ coverity/
 
 # Ignore migrations folder
 Migrations/
+
+# Ignore appsettings files
+appsettings.json
+appsettings.*.json
+!appsettings.example.json

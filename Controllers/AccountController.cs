@@ -1,13 +1,13 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Identity;
 using System.Threading.Tasks;
-using MyIdentityApi.Dtos;
+using MyIdentityApi.Dtos.Account;
 using MyIdentityApi.Services;
 using MyIdentityApi.Models;
 using Microsoft.AspNetCore.Authorization;
 using System.Security.Claims;
 using MyIdentityApi.Data;
-using MyIdentityApi.Dtos.Account;
+using MyIdentityApi.Mappers;
 
 namespace MyIdentityApi.Controllers
 {
@@ -41,14 +41,7 @@ namespace MyIdentityApi.Controllers
         {
             ArgumentNullException.ThrowIfNull(model);
 
-            var user = new ApplicationUser 
-            { 
-                UserName = model.Username, 
-                Email = model.Email, 
-                FirstName = model.FirstName, 
-                LastName = model.LastName 
-            };
-            
+            var user = AccountMapper.ToEntity(model);
             var result = await _userManager.CreateAsync(user, model.Password);
 
             if (result.Succeeded)
@@ -58,12 +51,7 @@ namespace MyIdentityApi.Controllers
                 var (token, expiresAt) = await _jwtTokenService.GenerateToken(user);
                 var refreshToken = await _refreshTokenService.GenerateRefreshTokenAsync(user);
                 
-                return Ok(new 
-                { 
-                    Token = token, 
-                    ExpiresAt = expiresAt,
-                    RefreshToken = refreshToken.Token 
-                });
+                return Ok(AccountMapper.ToAuthResponseDto(token, expiresAt, refreshToken.Token));
             }
 
             return BadRequest(result.Errors);
@@ -85,12 +73,7 @@ namespace MyIdentityApi.Controllers
                 var (token, expiresAt) = await _jwtTokenService.GenerateToken(user);
                 var refreshToken = await _refreshTokenService.GenerateRefreshTokenAsync(user);
                 
-                return Ok(new 
-                { 
-                    Token = token, 
-                    ExpiresAt = expiresAt,
-                    RefreshToken = refreshToken.Token 
-                });
+                return Ok(AccountMapper.ToAuthResponseDto(token, expiresAt, refreshToken.Token));
             }
 
             return Unauthorized();
@@ -118,12 +101,7 @@ namespace MyIdentityApi.Controllers
 
             await _refreshTokenService.RevokeRefreshTokenAsync(refreshToken);
 
-            return Ok(new 
-            { 
-                Token = newToken, 
-                ExpiresAt = expiresAt,
-                RefreshToken = newRefreshToken.Token 
-            });
+            return Ok(AccountMapper.ToAuthResponseDto(newToken, expiresAt, newRefreshToken.Token));
         }
 
         [HttpPost("logout")]
@@ -137,21 +115,14 @@ namespace MyIdentityApi.Controllers
                     return Unauthorized();
 
                 await _refreshTokenService.RevokeAllUserTokensAsync(userId);
-
                 await _signInManager.SignOutAsync();
-
                 Response.Cookies.Delete(".AspNetCore.Identity.Application");
 
                 var accessToken = Request.Headers["Authorization"].ToString().Replace("Bearer ", "");
                 if (!string.IsNullOrEmpty(accessToken))
                 {
-                    var token = new RevokedToken
-                    {
-                        Token = accessToken,
-                        UserId = userId,
-                        RevokedAt = DateTime.UtcNow
-                    };
-                    _context.RevokedTokens.Add(token);
+                    var revokedToken = RevokedTokenMapper.ToEntity(accessToken, userId);
+                    _context.RevokedTokens.Add(revokedToken);
                     await _context.SaveChangesAsync();
                 }
 
